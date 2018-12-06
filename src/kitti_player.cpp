@@ -87,6 +87,7 @@ struct kitti_player_options
     // string gpsReferenceFrame; // publish GPS points into RVIZ as RVIZ Markers
 };
 
+typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 bool waitSynch = false; /// Synch mode variable, refs #600
 
@@ -110,7 +111,7 @@ void synchCallback(const std_msgs::Bool::ConstPtr& msg)
 
 // https://stackoverflow.com/questions/43342199/draw-rotated-rectangle-in-opencv-c
 // Include center point of your rectangle, size of your rectangle and the degrees of rotation  
-void drawRotatedRectangle(cv::Mat& image, cv::Point centerPoint, cv::Size rectangleSize, double rotationDegrees, cv::Scalar color, int thickness)
+void drawRotatedRectangle(cv::Mat& image, cv::Point centerPoint, cv::Size rectangleSize, double rotationDegrees, const cv::Scalar color, int thickness)
 {
     // cv::Scalar color = cv::Scalar(255.0, 255.0, 255.0); // white
 
@@ -129,11 +130,68 @@ void drawRotatedRectangle(cv::Mat& image, cv::Point centerPoint, cv::Size rectan
     }
 
     // Now we can fill the rotated rectangle with our specified color
-    // cv::fillConvexPoly(image,
-    //                    vertices,
-    //                    4,
-    //                    color);
+    cv::fillConvexPoly(image,
+                       vertices,
+                       4,
+                       color);
 }
+
+
+void drawGT( tokenizer::iterator &token_iterator, tokenizer &tok, double *dataGroundTruth, double map_resolution, cv::Mat& bev_lidar,  const cv::Scalar& color)
+{
+    int index = 0;
+    for (token_iterator++; token_iterator != tok.end(); token_iterator++)
+    {
+        // std::cout << *token_iterator << " Luis lindinho" << endl;
+        dataGroundTruth[index++] = boost::lexical_cast<double>(*token_iterator);
+    }
+    // std::cout << " "<< std::endl;
+
+    int px = 256 + (int)(-dataGroundTruth[10]/map_resolution);
+    int py = (int)(dataGroundTruth[12]/map_resolution);
+    // int px = 256+(int)(dataGroundTruth[11]/map_resolution);
+    // int py = 256+(int)(dataGroundTruth[12]/map_resolution);
+
+    int w = (int)((dataGroundTruth[9])/map_resolution);
+    int l = (int)((dataGroundTruth[8])/map_resolution);
+    // int w = (int)((dataGroundTruth[9]/2)/map_resolution);
+    // int l = (int)((dataGroundTruth[8]/2)/map_resolution);
+
+    // cv::namedWindow("Luis");
+    // cv::imshow("Luis", bev_lidar);
+    // std::cout << "Xaproca 1" << std::endl;
+    // cv::waitKey();
+
+    // std::cout << px-l << " " << py-w << std::endl << px+l << " " << py+w << std::endl;
+
+    // rectangle(bev_lidar,   cv::Point(px-l, py-w), cv::Point(px+l, py+w),  cv::Scalar(0,0,255));
+
+    // cv::imshow("Luis", bev_lidar);
+    // std::cout << "Xaproca 2" << std::endl;
+    // cv::waitKey();
+
+    // std::cout << "ped_l"<< endl;// << camera_name);
+
+    drawRotatedRectangle( bev_lidar, cv::Point(px, py), cv::Size(w,l), (dataGroundTruth[13]*180)/3.1416, color, 3);//double rotationDegrees)
+
+    // cv::imshow("Luis", bev_lidar);
+    // std::cout << "Xaproca 3" << std::endl;
+    // cv::waitKey();
+
+    string text = std::to_string(dataGroundTruth[8]);
+    int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
+    double fontScale = 1;
+    int thickness = 1;                
+
+    // then put the text itself
+    // putText(bev_lidar, text, cv::Point(px,  py), fontFace, fontScale,  cv::Scalar::all(255), thickness, 1);
+
+    // cv::imshow("Luis", bev_lidar);
+    // std::cout << "Xaproca 4" << std::endl;
+    // cv::waitKey();
+}
+  
+
 
 /**
  * @brief publish_velodyne
@@ -142,7 +200,7 @@ void drawRotatedRectangle(cv::Mat& image, cv::Point centerPoint, cv::Size rectan
  * @param header Header to use to publish the message
  * @return 1 if file is correctly readed, 0 otherwise
  */
-int publish_velodyne(ros::Publisher &pub, string infile, string dir_root_vbox, std_msgs::Header *header)
+int publish_velodyne(string file_secuence, ros::Publisher &pub, string infile, string dir_root_vbox, std_msgs::Header *header)
 {
     fstream input(infile.c_str(), ios::in | ios::binary);
     if (!input.good())
@@ -190,6 +248,7 @@ int publish_velodyne(ros::Publisher &pub, string infile, string dir_root_vbox, s
         // boost::erase_all(numString, ".");
 
         cv::Mat bev_lidar( 500, 500, CV_8UC3, cv::Scalar(0, 0, 0));
+        cv::Mat bev_lidar_gt( 500, 500, CV_8UC3, cv::Scalar(0, 0, 0));
         // cv::Mat bev_lidar( 256, 256, CV_8UC3, cv::Scalar(255, 255, 255));
 
 
@@ -266,76 +325,20 @@ int publish_velodyne(ros::Publisher &pub, string infile, string dir_root_vbox, s
             token_iterator = tok.begin();
             if (strcmp((*token_iterator).c_str(), ((string)(string("Pedestrian") )).c_str()) == 0) //Rectification Matrix
             {
-                index = 0; //should be 12 at the end
+                // index = 0; //should be 12 at the end
                 std::cout << "Pedestrian_"<< endl;// << camera_name);
-                for (token_iterator++; token_iterator != tok.end(); token_iterator++)
-                {
-                    std::cout << *token_iterator << endl;
-                    dataGroundTruth[index++] = boost::lexical_cast<double>(*token_iterator);
-                }
-                std::cout << " "<< std::endl;
-
-                int px = 256 + (int)(-dataGroundTruth[10]/map_resolution);
-                int py = (int)(dataGroundTruth[12]/map_resolution);
-                // int px = 256+(int)(dataGroundTruth[11]/map_resolution);
-                // int py = 256+(int)(dataGroundTruth[12]/map_resolution);
-   
-                int w = (int)((dataGroundTruth[9])/map_resolution);
-                int l = (int)((dataGroundTruth[8])/map_resolution);
-                // int w = (int)((dataGroundTruth[9]/2)/map_resolution);
-                // int l = (int)((dataGroundTruth[8]/2)/map_resolution);
-
-                rectangle(bev_lidar,   cv::Point(px-l, py-w), cv::Point(px+l, py+w),  cv::Scalar(0,0,255));
-                drawRotatedRectangle(bev_lidar, cv::Point(px, py), cv::Size(w,l), (dataGroundTruth[13]*180)/3.1416, cv::Scalar(0,0,255), 3);//double rotationDegrees)
-
-                string text = std::to_string(dataGroundTruth[8]);
-                int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
-                double fontScale = 1;
-                int thickness = 1;                
-
-                // then put the text itself
-                putText(bev_lidar, text, cv::Point(px,  py), fontFace, fontScale,
-                        cv::Scalar::all(255), thickness, 1);
+                
+                drawGT( token_iterator, tok, dataGroundTruth, map_resolution, bev_lidar_gt, cv::Scalar(0,0,255));
 
             }
 
             token_iterator = tok.begin();
             if (strcmp((*token_iterator).c_str(), ((string)(string("Car") )).c_str()) == 0) //Projection Matrix Rectified
             {
-                index = 0; //should be 12 at the end
+                // index = 0; //should be 12 at the end
                 std::cout << "Car_"<< endl;// << camera_name);
-                for (token_iterator++; token_iterator != tok.end(); token_iterator++)
-                {
-                    std::cout << *token_iterator << endl;
-                    dataGroundTruth[index++] = boost::lexical_cast<double>(*token_iterator);
-                }
-                std::cout << " "<< std::endl;
 
-                int px = 256 + (int)(-dataGroundTruth[10]/map_resolution);
-                int py = (int)(dataGroundTruth[12]/map_resolution);
-                // int px = 256+(int)(dataGroundTruth[11]/map_resolution);
-                // int py = 256+(int)(dataGroundTruth[12]/map_resolution);
-       
-                int w = (int)((dataGroundTruth[9])/map_resolution);
-                int l = (int)((dataGroundTruth[8])/map_resolution);
-                // int w = (int)((dataGroundTruth[9])/map_resolution);
-                // int l = (int)((dataGroundTruth[8])/map_resolution);
-
-                rectangle(bev_lidar,   cv::Point(px-l, py-w), cv::Point(px+l, py+w),  cv::Scalar(0,0,255));
-                drawRotatedRectangle(bev_lidar, cv::Point(px, py), cv::Size(w,l), (dataGroundTruth[13]*180)/3.1416, cv::Scalar(0,0,255), 3);//double rotationDegrees)
-
-
-
-                string text = std::to_string(dataGroundTruth[8]);
-                int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
-                double fontScale = 1;
-                int thickness = 1;                
-
-                // then put the text itself
-                putText(bev_lidar, text, cv::Point(px,  py), fontFace, fontScale,
-                        cv::Scalar::all(255), thickness, 1);
-
-
+                drawGT( token_iterator, tok, dataGroundTruth, map_resolution, bev_lidar_gt, cv::Scalar(0,255,0));
 
 
 
@@ -346,33 +349,9 @@ int publish_velodyne(ros::Publisher &pub, string infile, string dir_root_vbox, s
             {
                 index = 0; //should be 12 at the end
                 std::cout << "Cyclist_"<< endl;// << camera_name);
-                for (token_iterator++; token_iterator != tok.end(); token_iterator++)
-                {
-                    std::cout << *token_iterator  << endl;
-                    dataGroundTruth[index++] = boost::lexical_cast<double>(*token_iterator);
-                }
-                std::cout << " "<< std::endl;
-                int px = 256 + (int)(-dataGroundTruth[10]/map_resolution);
-                int py = (int)(dataGroundTruth[12]/map_resolution);
-                // int px = 256+(int)(dataGroundTruth[11]/map_resolution);
-                // int py = 256+(int)(dataGroundTruth[12]/map_resolution);
-     
-                int w = (int)((dataGroundTruth[9])/map_resolution);
-                int l = (int)((dataGroundTruth[8])/map_resolution);
-                // int w = (int)((dataGroundTruth[9])/map_resolution);
-                // int l = (int)((dataGroundTruth[8])/map_resolution);
 
-                rectangle(bev_lidar,   cv::Point(px-l, py-w), cv::Point(px+l, py+w),  cv::Scalar(0,255,0));
-                drawRotatedRectangle(bev_lidar, cv::Point(px, py), cv::Size(w,l), (dataGroundTruth[13]*180)/3.1416, cv::Scalar(0,0,255), 3);//double rotationDegrees)
+                drawGT( token_iterator, tok, dataGroundTruth, map_resolution, bev_lidar_gt, cv::Scalar(255,0,0));
 
-                string text = std::to_string(dataGroundTruth[8]);
-                int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
-                double fontScale = 1;
-                int thickness = 1;                
-
-                // then put the text itself
-                putText(bev_lidar, text, cv::Point(px,  py), fontFace, fontScale,
-                        cv::Scalar::all(255), thickness, 1);
 
             }
 
@@ -381,42 +360,22 @@ int publish_velodyne(ros::Publisher &pub, string infile, string dir_root_vbox, s
             {
                 index = 0; //should be 12 at the end
                 std::cout << "DontCare_"<< endl;// << camera_name);
-                for (token_iterator++; token_iterator != tok.end(); token_iterator++)
-                {
-                    std::cout << *token_iterator  << endl;
-                    dataGroundTruth[index++] = boost::lexical_cast<double>(*token_iterator);
-                }
-                std::cout << " "<< std::endl;
-                int px = 256 + (int)(dataGroundTruth[10]/map_resolution);
-                int py = (int)(dataGroundTruth[12]/map_resolution);
-                // int px = 256+(int)(dataGroundTruth[11]/map_resolution);
-                // int py = 256+(int)(dataGroundTruth[12]/map_resolution);
-         
-                int w = (int)((dataGroundTruth[9])/map_resolution);
-                int l = (int)((dataGroundTruth[8])/map_resolution);
-                // int w = (int)((dataGroundTruth[9])/map_resolution);
-                // int l = (int)((dataGroundTruth[8])/map_resolution);
 
-                rectangle(bev_lidar,   cv::Point(px-l, py-w), cv::Point(px+l, py+w),  cv::Scalar(255,0,255));
-                drawRotatedRectangle(bev_lidar, cv::Point(px, py), cv::Size(w,l), (dataGroundTruth[13]*180)/3.1416, cv::Scalar(0,0,255), 3);//double rotationDegrees)
+                drawGT( token_iterator, tok, dataGroundTruth, map_resolution, bev_lidar_gt, cv::Scalar(0,0,255));
 
-                string text = std::to_string(dataGroundTruth[8]);
-                int fontFace = cv::FONT_HERSHEY_SCRIPT_SIMPLEX;
-                double fontScale = 1;
-                int thickness = 1;                
-
-                // then put the text itself
-                putText(bev_lidar, text, cv::Point(px,  py), fontFace, fontScale,
-                        cv::Scalar::all(255), thickness, 1);
 
             }
 
 
         }
         cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
-        cv::imshow( "Display window", bev_lidar );                   // Show our image inside it.
-        // imwrite( "/media/luis/data/carla_bird_eye_dataset/velodyne/carina/data/"+ numString +".png", bev_lidar);
-        cv::waitKey(0);
+        cv::imshow( "Display window", bev_lidar );  
+        cv::imshow( "Display window", bev_lidar_gt ); 
+                         // Show our image inside it.
+        imwrite( "/media/luis/data/carla_bird_eye_dataset/kitti/data/"+ file_secuence +".png", bev_lidar);
+        imwrite( "/media/luis/data/carla_bird_eye_dataset/kitti/gt/"+ file_secuence +".png", bev_lidar_gt);
+
+        cv::waitKey(5);
         ROS_INFO("... ok");
 
 
@@ -425,6 +384,8 @@ int publish_velodyne(ros::Publisher &pub, string infile, string dir_root_vbox, s
 }
 
 
+
+              
 
 /**
  * @brief getCalibration
@@ -1656,11 +1617,12 @@ int main(int argc, char **argv)
         //     pub01.publish(ros_msg01, ros_cameraInfoMsg_camera01);
 
         // }
-
+        string file_secuence = boost::str(boost::format("%06d") % entries_played );
         if (options.velodyne || options.all_data)
         {
             header_support.stamp = current_timestamp;
-            full_filename_velodyne = dir_velodyne_points + boost::str(boost::format("%06d") % entries_played ) + ".bin";
+
+            full_filename_velodyne = dir_velodyne_points + file_secuence + ".bin";
             full_filename_vbox = dir_label + boost::str(boost::format("%06d") % entries_played ) + ".txt";
 
             cout << full_filename_velodyne << endl;
@@ -1670,7 +1632,7 @@ int main(int argc, char **argv)
 
 
             if (!options.timestamps)
-                publish_velodyne(map_pub, full_filename_velodyne, full_filename_vbox, &header_support);
+                publish_velodyne(file_secuence, map_pub, full_filename_velodyne, full_filename_vbox, &header_support);
             else
             {
                 str_support = dir_timestamp_velodyne + "timestamps.txt";
@@ -1684,7 +1646,7 @@ int main(int argc, char **argv)
                 timestamps.seekg(30 * entries_played);
                 getline(timestamps, str_support);
                 header_support.stamp = parseTime(str_support).stamp;
-                publish_velodyne(map_pub, full_filename_velodyne, full_filename_vbox, &header_support);
+                publish_velodyne(file_secuence, map_pub, full_filename_velodyne, full_filename_vbox, &header_support);
             }
 
 
