@@ -372,8 +372,8 @@ int publish_velodyne(string file_secuence, ros::Publisher &pub, string infile, s
         cv::imshow( "Display window", bev_lidar );  
         cv::imshow( "Display window", bev_lidar_gt ); 
                          // Show our image inside it.
-        imwrite( "/media/luis/data/carla_bird_eye_dataset/kitti/data/"+ file_secuence +".png", bev_lidar);
-        imwrite( "/media/luis/data/carla_bird_eye_dataset/kitti/gt/"+ file_secuence +".png", bev_lidar_gt);
+        imwrite( "/media/luis/data/carla_bird_eye_dataset/kitti64/data/"+ file_secuence +".png", bev_lidar);
+        imwrite( "/media/luis/data/carla_bird_eye_dataset/kitti64/gt/"+ file_secuence +".png", bev_lidar_gt);
 
         cv::waitKey(5);
         ROS_INFO("... ok");
