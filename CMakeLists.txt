@@ -15,6 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
                     cv_bridge
                     image_transport
                     dynamic_reconfigure
+			stereo_msgs
+			image_geometry
+
 )
 
 #find_package(PCL 1.8 REQUIRED)
