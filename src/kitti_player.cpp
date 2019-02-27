@@ -132,7 +132,9 @@ int publish_velodyne(ros::Publisher &pub, string infile, std_msgs::Header *heade
         //workaround for the PCL headers... http://wiki.ros.org/hydro/Migration#PCL
         sensor_msgs::PointCloud2 pc2;
 
-        pc2.header.frame_id = "base_link"; //ros::this_node::getName();
+        // pc2.header.frame_id = "base_link"; //ros::this_node::getName();
+        pc2.header.frame_id = "velodyne"; 
+        // pc2.header.frame_id = "kitti_player"; 
         pc2.header.stamp = header->stamp;
         points->header = pcl_conversions::toPCL(pc2.header);
         pub.publish(points);
@@ -873,28 +875,36 @@ int main(int argc, char **argv)
     // CAMERA INFO SECTION: read one for all
 
     ros_cameraInfoMsg_camera00.header.stamp = ros::Time::now();
-    ros_cameraInfoMsg_camera00.header.frame_id = ros::this_node::getName();
+    ros_cameraInfoMsg_camera00.header.frame_id = "stero";
+    // ros_cameraInfoMsg_camera00.header.frame_id = ros::this_node::getName();
+
     ros_cameraInfoMsg_camera00.height = 0;
     ros_cameraInfoMsg_camera00.width  = 0;
     //ros_cameraInfoMsg_camera00.D.resize(5);
     //ros_cameraInfoMsg_camera00.distortion_model=sensor_msgs::distortion_models::PLUMB_BOB;
 
     ros_cameraInfoMsg_camera01.header.stamp = ros::Time::now();
-    ros_cameraInfoMsg_camera01.header.frame_id = ros::this_node::getName();
+    ros_cameraInfoMsg_camera01.header.frame_id = "stereo";
+    // ros_cameraInfoMsg_camera01.header.frame_id = ros::this_node::getName();
+
     ros_cameraInfoMsg_camera01.height = 0;
     ros_cameraInfoMsg_camera01.width  = 0;
     //ros_cameraInfoMsg_camera01.D.resize(5);
     //ros_cameraInfoMsg_camera00.distortion_model=sensor_msgs::distortion_models::PLUMB_BOB;
 
     ros_cameraInfoMsg_camera02.header.stamp = ros::Time::now();
-    ros_cameraInfoMsg_camera02.header.frame_id = ros::this_node::getName();
+    ros_cameraInfoMsg_camera02.header.frame_id = "stereo";
+    // ros_cameraInfoMsg_camera02.header.frame_id = ros::this_node::getName();
+
     ros_cameraInfoMsg_camera02.height = 0;
     ros_cameraInfoMsg_camera02.width  = 0;
     //ros_cameraInfoMsg_camera02.D.resize(5);
     //ros_cameraInfoMsg_camera02.distortion_model=sensor_msgs::distortion_models::PLUMB_BOB;
 
     ros_cameraInfoMsg_camera03.header.stamp = ros::Time::now();
-    ros_cameraInfoMsg_camera03.header.frame_id = ros::this_node::getName();
+    ros_cameraInfoMsg_camera03.header.frame_id = "stereo";
+    // ros_cameraInfoMsg_camera03.header.frame_id = ros::this_node::getName();
+
     ros_cameraInfoMsg_camera03.height = 0;
     ros_cameraInfoMsg_camera03.width  = 0;
     //ros_cameraInfoMsg_camera03.D.resize(5);
@@ -986,7 +996,7 @@ int main(int argc, char **argv)
             disp_msg->f                     = 0;  // should be safe, checked!
             disp_msg->delta_d               = 0;  // should be safe, checked!
             disp_msg->header.stamp          = current_timestamp;
-            disp_msg->header.frame_id       = ros::this_node::getName();
+            disp_msg->header.frame_id       = "stereo"; //ros::this_node::getName();
             disp_msg->header.seq            = progress.count();
 
             sensor_msgs::Image& dimage = disp_msg->image;
@@ -1038,7 +1048,9 @@ int main(int argc, char **argv)
             }
 
             cv_bridge_img.encoding = sensor_msgs::image_encodings::BGR8;
-            cv_bridge_img.header.frame_id = ros::this_node::getName();
+            cv_bridge_img.header.frame_id = "stereo";
+            // cv_bridge_img.header.frame_id = ros::this_node::getName();
+
 
             if (!options.timestamps)
             {
@@ -1124,7 +1136,9 @@ int main(int argc, char **argv)
             }
 
             cv_bridge_img.encoding = sensor_msgs::image_encodings::MONO8;
-            cv_bridge_img.header.frame_id = ros::this_node::getName();
+            cv_bridge_img.header.frame_id = "stereo";
+            // cv_bridge_img.header.frame_id = ros::this_node::getName();
+
 
             if (!options.timestamps)
             {

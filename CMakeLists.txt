@@ -39,9 +39,10 @@ include_directories(
 #add_definitions(${PCL_DEFINITIONS})
 
 add_executable(kitti_player src/kitti_player.cpp)
+add_executable(kitti_player_depth src/kitti_player_depth.cpp)
 
 target_link_libraries(kitti_player ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${Boost_LIBRARIES}  ${OpenCV_LIBRARIES})
-
+target_link_libraries(kitti_player_depth ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${Boost_LIBRARIES}  ${OpenCV_LIBRARIES})
 #############
 
 #Add all files in subdirectories of the project in

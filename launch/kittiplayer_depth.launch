@@ -6,15 +6,24 @@
 
     <!--arg    name="directory"
             default="$(find kitti_player)/dataset/2011_09_26/2011_09_26_drive_0005_sync/"
+            default="/home/shared/datasets/depth_kitti/depth/depth_single_img/train/2011_09_26_drive_0006_sync/"
+
             /-->
 
-    <arg    name="directory"
-            default="/media/luis/SAMSUNG/kitti_raw/raw_data/2011_09_26/2011_09_26_drive_0005_sync/"
+	<arg    name="directory"
+            default="/home/shared/datasets/depth_kitti/depth/depth_single_img/train/2011_09_28_drive_0016_sync/"
+
             />
 
-    <node   name="kitti_player" pkg="kitti_player" type="kitti_player"
+
+    <!--    <arg    name="directory"
+            default="/media/luis/SAMSUNG/kitti_raw/raw_data/2011_09_26/2011_09_26_drive_0005_sync/"
+            />
+            /-->
+
+    <node   name="kitti_player_depth" pkg="kitti_player" type="kitti_player_depth"
             required="true"
-            args= "-d $(arg directory) -C -v -p map -F 147 -D -V -f 10"
+            args= "-d $(arg directory) -C -v -p map -F 5 -D -V -f 1"
             output="screen"
             />
 
